@@ -1,0 +1,59 @@
+# ─────────────────────────────────────────────────────────
+# Merge Policy — ShieldSentinel Review Engine
+# ─────────────────────────────────────────────────────────
+# Defines thresholds and hard blockers for merge decisions.
+# Decision priority: hard_blockers → block → request_changes → approve
+
+# Score-based thresholds (score = weighted deduction total)
+# Lower score = fewer/less severe findings = safer to merge
+thresholds:
+  approve:
+    max_score: 15           # Total weighted score ≤ 15 → approve
+    max_critical: 0         # Zero critical findings allowed
+    max_high: 0             # Zero high findings allowed
+
+  request_changes:
+    max_score: 50           # 15 < score ≤ 50 → request changes
+    max_critical: 0         # Still zero critical allowed
+    max_high: 3             # Up to 3 high findings before block
+
+  # Anything exceeding request_changes thresholds → block
+
+# Hard blockers — instant block regardless of score
+# If ANY finding matches these criteria, decision = block
+hard_blockers:
+  - category: "secrets"
+    min_severity: "low"       # ANY secret leak = instant block
+    reason: "Secret/credential leak detected — must be resolved before merge"
+
+  - category: "injection"
+    min_severity: "high"      # High+ injection = instant block
+    reason: "High-severity injection vulnerability — code must be fixed"
+
+  - category: "authentication"
+    min_severity: "critical"
+    reason: "Critical authentication bypass — merge blocked"
+
+# Severity ordering for threshold comparisons
+severity_order:
+  critical: 4
+  high: 3
+  medium: 2
+  low: 1
+  info: 0
+
+# ── v3: Policy Overrides ──────────────────────────────
+# These fire BEFORE score thresholds and can force a decision.
+# Each override is evaluated in order; first match wins.
+policy_overrides:
+  # If every actionable finding is 'existing' (not new),
+  # auto-approve — this PR didn't introduce anything new.
+  auto_approve_existing_only: true
+
+  # Any NEW finding at critical severity → instant block,
+  # regardless of total score.
+  block_any_new_critical: true
+
+  # Any NEW secret/credential finding on a changed line → block.
+  # Prevents new secrets from being merged.
+  require_fix_for_new_secrets: true

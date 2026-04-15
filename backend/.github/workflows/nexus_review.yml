@@ -1,0 +1,84 @@
+name: AuditLens PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  # ── PR Review: Triggered on pull_request events ──
+  security-review:
+    name: Security Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger AuditLens PR Review
+        run: |
+          echo "🛡️ Triggering AuditLens security review..."
+          echo "   Repo: ${{ github.event.repository.html_url }}"
+          echo "   PR:   #${{ github.event.pull_request.number }}"
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "${{ secrets.AUDITLENS_API_URL }}/api/v1/review/github-pr" \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: ${{ secrets.WEBHOOK_SECRET }}" \
+            -d '{
+              "repo_url": "${{ github.event.repository.html_url }}",
+              "pr_number": ${{ github.event.pull_request.number }}
+            }')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "Response: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ AuditLens review trigger failed"
+            exit 1
+          fi
+
+          echo "✅ AuditLens review queued successfully"
+
+  # ── Re-Review: Triggered on "fixed" comments ────
+  re-review:
+    name: Re-Review (Fixed)
+    if: >
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, 'fixed') &&
+      github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compute HMAC Signature
+        id: hmac
+        run: |
+          PAYLOAD='${{ toJson(github.event) }}'
+          SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | awk '{print $2}')
+          echo "signature=sha256=${SIGNATURE}" >> $GITHUB_OUTPUT
+
+      - name: Trigger AuditLens Re-Review
+        run: |
+          echo "🔄 Triggering AuditLens re-review..."
+          echo "   Commenter: ${{ github.event.comment.user.login }}"
+          echo "   PR: #${{ github.event.issue.number }}"
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "${{ secrets.AUDITLENS_API_URL }}/api/v1/webhooks/github" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: issue_comment" \
+            -H "X-Hub-Signature-256: ${{ steps.hmac.outputs.signature }}" \
+            -d '${{ toJson(github.event) }}')
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "Response: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "❌ AuditLens re-review trigger failed"
+            exit 1
+          fi
+
+          echo "✅ AuditLens re-review queued successfully"

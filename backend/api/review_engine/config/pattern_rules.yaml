@@ -1,0 +1,230 @@
+# ─────────────────────────────────────────────────────────
+# Pattern Rules — ShieldSentinel Review Engine v2
+# ─────────────────────────────────────────────────────────
+# Regex-based rules applied directly to diff hunks.
+# Only ADDED lines (starting with +) are scanned.
+# Each rule generates a synthetic finding if matched.
+#
+# Fields:
+#   id:          Unique rule identifier
+#   name:        Human-readable rule name
+#   pattern:     Python regex (applied to each added line)
+#   severity:    critical | high | medium | low | info
+#   category:    Maps to scoring category_multipliers
+#   languages:   File extensions to scope (empty = all)
+#   message:     Finding message template ({match} = matched text)
+#   suggestion:  Optional fix suggestion
+#   confidence:  0.0–1.0 confidence in the detection
+#   enabled:     Toggle rule on/off
+
+rules:
+  # ── Injection ─────────────────────────────────────────
+  - id: "SQLI-001"
+    name: "String concatenation in SQL query"
+    pattern: '(?i)(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE).*[\"\'']\s*\+\s*\w+'
+    severity: "high"
+    category: "injection"
+    languages: [".py", ".js", ".ts", ".rb", ".java", ".php"]
+    message: "SQL query built with string concatenation — vulnerable to SQL injection"
+    suggestion: "Use parameterized queries or an ORM"
+    confidence: 0.9
+    enabled: true
+
+  - id: "SQLI-002"
+    name: "f-string in SQL query"
+    pattern: '(?i)(?:execute|cursor|query|raw)\s*\(\s*f["\''"].*\{.*\}'
+    severity: "high"
+    category: "injection"
+    languages: [".py"]
+    message: "SQL query uses f-string interpolation — vulnerable to SQL injection"
+    suggestion: "Use parameterized queries: cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))"
+    confidence: 0.95
+    enabled: true
+
+  - id: "SQLI-003"
+    name: "format() in SQL query"
+    pattern: '(?i)(?:execute|cursor|query|raw)\s*\(.*\.format\s*\('
+    severity: "high"
+    category: "injection"
+    languages: [".py"]
+    message: "SQL query uses .format() string interpolation — vulnerable to injection"
+    suggestion: "Use parameterized queries instead of string formatting"
+    confidence: 0.9
+    enabled: true
+
+  - id: "CMDI-001"
+    name: "Shell command injection"
+    pattern: '(?i)(?:os\.system|subprocess\.call|subprocess\.Popen|exec|eval)\s*\(.*\+\s*\w+'
+    severity: "critical"
+    category: "injection"
+    languages: [".py"]
+    message: "Shell command built with string concatenation — vulnerable to command injection"
+    suggestion: "Use subprocess with a list of arguments instead of shell=True"
+    confidence: 0.85
+    enabled: true
+
+  - id: "CMDI-002"
+    name: "Shell=True in subprocess"
+    pattern: '(?i)subprocess\.\w+\(.*shell\s*=\s*True'
+    severity: "medium"
+    category: "injection"
+    languages: [".py"]
+    message: "subprocess called with shell=True — potential command injection vector"
+    suggestion: "Use subprocess with shell=False and pass args as a list"
+    confidence: 0.8
+    enabled: true
+
+  # ── Secrets ───────────────────────────────────────────
+  - id: "SECRET-001"
+    name: "Hardcoded password"
+    pattern: '(?i)(?:password|passwd|pwd)\s*=\s*["\x27][^"\x27]{8,}["\x27]'
+    severity: "critical"
+    category: "secrets"
+    languages: []
+    message: "Hardcoded password detected in source code"
+    suggestion: "Move secrets to environment variables or a secrets manager"
+    confidence: 0.85
+    enabled: true
+
+  - id: "SECRET-002"
+    name: "Hardcoded API key"
+    pattern: '(?i)(?:api_?key|apikey|access_?key|auth_?token)\s*=\s*["\x27][A-Za-z0-9_\-]{20,}["\x27]'
+    severity: "critical"
+    category: "secrets"
+    languages: []
+    message: "Hardcoded API key or token detected"
+    suggestion: "Use environment variables: os.getenv('API_KEY')"
+    confidence: 0.9
+    enabled: true
+
+  - id: "SECRET-003"
+    name: "Private key in source"
+    pattern: '-----BEGIN (?:RSA |EC |DSA )?PRIVATE KEY-----'
+    severity: "critical"
+    category: "secrets"
+    languages: []
+    message: "Private key embedded in source code"
+    suggestion: "Store private keys in a secure vault, never in source control"
+    confidence: 0.99
+    enabled: true
+
+  - id: "SECRET-004"
+    name: "AWS credentials"
+    pattern: '(?:AKIA|ASIA)[A-Z0-9]{16}'
+    severity: "critical"
+    category: "secrets"
+    languages: []
+    message: "AWS access key ID detected in source code"
+    suggestion: "Rotate this key immediately and use IAM roles instead"
+    confidence: 0.95
+    enabled: true
+
+  # ── XSS ───────────────────────────────────────────────
+  - id: "XSS-001"
+    name: "innerHTML assignment"
+    pattern: '\.innerHTML\s*='
+    severity: "medium"
+    category: "xss"
+    languages: [".js", ".ts", ".jsx", ".tsx"]
+    message: "Direct innerHTML assignment — potential XSS vector"
+    suggestion: "Use textContent or a sanitization library like DOMPurify"
+    confidence: 0.75
+    enabled: true
+
+  - id: "XSS-002"
+    name: "document.write usage"
+    pattern: 'document\.write\s*\('
+    severity: "medium"
+    category: "xss"
+    languages: [".js", ".ts", ".html"]
+    message: "document.write() can introduce XSS vulnerabilities"
+    suggestion: "Use DOM manipulation methods instead"
+    confidence: 0.7
+    enabled: true
+
+  - id: "XSS-003"
+    name: "Unescaped template rendering"
+    pattern: '\{\{\{.*\}\}\}|\{%\s*autoescape\s+false'
+    severity: "high"
+    category: "xss"
+    languages: [".html", ".jinja", ".jinja2", ".hbs"]
+    message: "Unescaped template output — XSS vulnerability"
+    suggestion: "Use double-brace escaping {{ }} or enable autoescape"
+    confidence: 0.85
+    enabled: true
+
+  # ── Cryptography ──────────────────────────────────────
+  - id: "CRYPTO-001"
+    name: "Weak hash algorithm (MD5/SHA1)"
+    pattern: '(?i)(?:hashlib\.md5|hashlib\.sha1|MD5|SHA1)\s*\('
+    severity: "medium"
+    category: "cryptography"
+    languages: [".py", ".js", ".java"]
+    message: "Weak hash algorithm (MD5/SHA1) used — cryptographically broken"
+    suggestion: "Use SHA-256 or bcrypt for password hashing"
+    confidence: 0.9
+    enabled: true
+
+  - id: "CRYPTO-002"
+    name: "Insecure random"
+    pattern: '(?i)(?:random\.random|Math\.random|rand\(\))\s*'
+    severity: "medium"
+    category: "cryptography"
+    languages: [".py", ".js", ".java", ".rb"]
+    message: "Insecure random number generator used for security-sensitive operation"
+    suggestion: "Use secrets.token_hex() (Python) or crypto.randomBytes() (Node)"
+    confidence: 0.6
+    enabled: true
+
+  # ── Authentication ────────────────────────────────────
+  - id: "AUTH-001"
+    name: "JWT verify disabled"
+    pattern: '(?i)verify\s*=\s*False|algorithms\s*=\s*\[?\s*["\x27]none["\x27]'
+    severity: "critical"
+    category: "authentication"
+    languages: [".py", ".js"]
+    message: "JWT signature verification disabled — authentication bypass"
+    suggestion: "Always verify JWT signatures with algorithms=['HS256'] and a strong secret"
+    confidence: 0.95
+    enabled: true
+
+  - id: "AUTH-002"
+    name: "SSL verification disabled"
+    pattern: '(?i)verify\s*=\s*False|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*["\x27]0["\x27]'
+    severity: "high"
+    category: "authentication"
+    languages: [".py", ".js"]
+    message: "SSL/TLS certificate verification disabled — MITM attack vector"
+    suggestion: "Enable certificate verification in production"
+    confidence: 0.8
+    enabled: true
+
+  # ── Misconfiguration ──────────────────────────────────
+  - id: "CONFIG-001"
+    name: "Debug mode enabled"
+    pattern: '(?i)(?:DEBUG|debug)\s*=\s*True|app\.debug\s*=\s*True'
+    severity: "low"
+    category: "misconfiguration"
+    languages: [".py", ".js", ".env"]
+    message: "Debug mode enabled — may expose sensitive information in production"
+    suggestion: "Set DEBUG=False in production configuration"
+    confidence: 0.7
+    enabled: true
+
+  - id: "CONFIG-002"
+    name: "CORS allow all origins"
+    pattern: '(?i)(?:allow_origins|Access-Control-Allow-Origin)\s*[:=]\s*["\x27]\*["\x27]'
+    severity: "medium"
+    category: "misconfiguration"
+    languages: [".py", ".js", ".ts"]
+    message: "CORS allows all origins — potential security risk"
+    suggestion: "Restrict allowed origins to specific trusted domains"
+    confidence: 0.8
+    enabled: true
+
+# Deduplication: if a pattern finding matches same file+line+category
+# as an existing scanner finding, the synthetic finding is suppressed
+dedup_enabled: true
+
+# Minimum confidence threshold — below this, findings are dropped
+min_confidence: 0.5

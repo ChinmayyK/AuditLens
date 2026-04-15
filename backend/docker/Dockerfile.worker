@@ -1,0 +1,8 @@
+FROM shieldsentinel-api:latest
+
+WORKDIR /app
+
+CMD ["celery", "-A", "workers.celery_app", "worker",
+     "--loglevel=info",
+     "--concurrency=4",
+     "-Q", "recon,dast,sast,ai,reports,default"]

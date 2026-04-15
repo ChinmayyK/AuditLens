@@ -1,0 +1,122 @@
+{
+  "SQL Injection": {
+    "owasp": "A03:2021 - Injection",
+    "pci_dss": ["Req 6.3.2 - Vulnerability management", "Req 6.4.1 - Web application protection"],
+    "hipaa": ["164.312(a)(1) - Access Control", "164.306(a)(1) - Security Standards"],
+    "gdpr": ["Article 32 - Security of processing", "Article 25 - Data protection by design"]
+  },
+  "Cross Site Scripting (Reflected)": {
+    "owasp": "A03:2021 - Injection",
+    "pci_dss": ["Req 6.3.2", "Req 6.4.1"],
+    "hipaa": ["164.312(a)(1)"],
+    "gdpr": ["Article 32"]
+  },
+  "Cross Site Scripting (Persistent)": {
+    "owasp": "A03:2021 - Injection",
+    "pci_dss": ["Req 6.3.2", "Req 6.4.1"],
+    "hipaa": ["164.312(a)(1)"],
+    "gdpr": ["Article 32"]
+  },
+  "Hardcoded Secret": {
+    "owasp": "A02:2021 - Cryptographic Failures",
+    "pci_dss": ["Req 3.5 - Protect stored cardholder data", "Req 8.3 - Secure authentication"],
+    "hipaa": ["164.312(a)(2)(i) - Unique user identification", "164.312(d) - Authentication"],
+    "gdpr": ["Article 32", "Article 25"]
+  },
+  "Path Traversal": {
+    "owasp": "A01:2021 - Broken Access Control",
+    "pci_dss": ["Req 7.1 - Limit access", "Req 6.3.2"],
+    "hipaa": ["164.312(a)(1)", "164.312(e)(2)(i)"],
+    "gdpr": ["Article 32", "Article 5(1)(f)"]
+  },
+  "Server Side Request Forgery": {
+    "owasp": "A10:2021 - SSRF",
+    "pci_dss": ["Req 6.4.1", "Req 1.3 - Network access controls"],
+    "hipaa": ["164.312(e)(1)"],
+    "gdpr": ["Article 32"]
+  },
+  "Remote OS Command Injection": {
+    "owasp": "A03:2021 - Injection",
+    "pci_dss": ["Req 6.3.2", "Req 6.4.1"],
+    "hipaa": ["164.312(a)(1)"],
+    "gdpr": ["Article 32"]
+  },
+  "Vulnerable Dependency": {
+    "owasp": "A06:2021 - Vulnerable Components",
+    "pci_dss": ["Req 6.3.3 - Security patches", "Req 12.3.2"],
+    "hipaa": ["164.308(a)(5) - Security awareness"],
+    "gdpr": ["Article 32"]
+  },
+  "Missing Anti-Clickjacking Header": {
+    "owasp": "A05:2021 - Security Misconfiguration",
+    "pci_dss": ["Req 6.4.1"],
+    "hipaa": ["164.312(e)(2)(ii)"],
+    "gdpr": ["Article 32"]
+  },
+  "Missing Content-Security-Policy": {
+    "owasp": "A05:2021 - Security Misconfiguration",
+    "pci_dss": ["Req 6.4.1"],
+    "hipaa": ["164.312(e)(2)(ii)"],
+    "gdpr": ["Article 32"]
+  },
+  "Missing HSTS Header": {
+    "owasp": "A02:2021 - Cryptographic Failures",
+    "pci_dss": ["Req 4.2.1 - Strong cryptography in transit"],
+    "hipaa": ["164.312(e)(1) - Transmission security"],
+    "gdpr": ["Article 32"]
+  },
+  "Cookie Without Secure Flag": {
+    "owasp": "A02:2021 - Cryptographic Failures",
+    "pci_dss": ["Req 4.2.1", "Req 8.6"],
+    "hipaa": ["164.312(e)(1)"],
+    "gdpr": ["Article 32"]
+  },
+  "Cookie Without HttpOnly Flag": {
+    "owasp": "A02:2021 - Cryptographic Failures",
+    "pci_dss": ["Req 6.4.1"],
+    "hipaa": ["164.312(a)(1)"],
+    "gdpr": ["Article 32"]
+  },
+  "Cross-Site Request Forgery": {
+    "owasp": "A01:2021 - Broken Access Control",
+    "pci_dss": ["Req 6.4.1", "Req 6.3.2"],
+    "hipaa": ["164.312(a)(1)"],
+    "gdpr": ["Article 32"]
+  },
+  "Directory Browsing": {
+    "owasp": "A05:2021 - Security Misconfiguration",
+    "pci_dss": ["Req 7.1", "Req 6.3.2"],
+    "hipaa": ["164.312(a)(1)"],
+    "gdpr": ["Article 32", "Article 5(1)(f)"]
+  },
+  "SSL Certificate Expired": {
+    "owasp": "A02:2021 - Cryptographic Failures",
+    "pci_dss": ["Req 4.2.1"],
+    "hipaa": ["164.312(e)(1)"],
+    "gdpr": ["Article 32"]
+  },
+  "No HTTPS Encryption": {
+    "owasp": "A02:2021 - Cryptographic Failures",
+    "pci_dss": ["Req 4.2.1 - No clear-text transmission"],
+    "hipaa": ["164.312(e)(1) - Transmission security"],
+    "gdpr": ["Article 32 - Encryption required"]
+  },
+  "Default Credentials": {
+    "owasp": "A07:2021 - Identification Failures",
+    "pci_dss": ["Req 8.3.6 - Change default passwords", "Req 8.2.1"],
+    "hipaa": ["164.312(d) - Authentication"],
+    "gdpr": ["Article 32"]
+  },
+  "Missing Rate Limiting": {
+    "owasp": "A07:2021 - Identification Failures",
+    "pci_dss": ["Req 8.3.4 - Account lockout"],
+    "hipaa": ["164.312(d)"],
+    "gdpr": ["Article 32"]
+  },
+  "Application Error Disclosure": {
+    "owasp": "A05:2021 - Security Misconfiguration",
+    "pci_dss": ["Req 6.3.2"],
+    "hipaa": ["164.306(a)(1)"],
+    "gdpr": ["Article 32"]
+  }
+}

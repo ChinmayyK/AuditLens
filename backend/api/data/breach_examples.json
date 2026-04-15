@@ -1,0 +1,160 @@
+{
+  "SQL Injection": {
+    "min": 100000,
+    "max": 10000000,
+    "examples": [
+      {
+        "company": "Equifax (2017)",
+        "loss": "$575M settlement",
+        "detail": "SQL injection contributed to the largest US data breach — 147 million records exposed"
+      },
+      {
+        "company": "Heartland Payment Systems (2008)",
+        "loss": "$140M in fines",
+        "detail": "SQL injection exposed 130 million credit card numbers in payment processor"
+      }
+    ]
+  },
+  "Cross Site Scripting (Reflected)": {
+    "min": 10000,
+    "max": 2000000,
+    "examples": [
+      {
+        "company": "British Airways (2018)",
+        "loss": "$230M GDPR fine",
+        "detail": "XSS used to skim 500,000 payment card details from checkout page"
+      },
+      {
+        "company": "eBay (2015)",
+        "loss": "$200M reputation damage",
+        "detail": "Stored XSS in listings allowed attackers to redirect users to phishing sites"
+      }
+    ]
+  },
+  "Hardcoded Secret": {
+    "min": 50000,
+    "max": 10000000,
+    "examples": [
+      {
+        "company": "Toyota (2023)",
+        "loss": "296,000 customer records exposed",
+        "detail": "Hardcoded API key committed to public GitHub repo exposed years of customer data"
+      },
+      {
+        "company": "Uber (2022)",
+        "loss": "$148M penalty",
+        "detail": "Hardcoded AWS credentials in code led to full S3 bucket access and 57M user records stolen"
+      }
+    ]
+  },
+  "Server Side Request Forgery": {
+    "min": 200000,
+    "max": 50000000,
+    "examples": [
+      {
+        "company": "Capital One (2019)",
+        "loss": "$80M fine + $190M settlement",
+        "detail": "SSRF used to access AWS metadata endpoint and steal IAM credentials — 100M records exposed"
+      }
+    ]
+  },
+  "Path Traversal": {
+    "min": 50000,
+    "max": 5000000,
+    "examples": [
+      {
+        "company": "Accellion (2021)",
+        "loss": "$8.1M settlement",
+        "detail": "Path traversal in file transfer appliance exposed confidential data from 100+ organizations"
+      }
+    ]
+  },
+  "Remote OS Command Injection": {
+    "min": 500000,
+    "max": 100000000,
+    "examples": [
+      {
+        "company": "SolarWinds (2020)",
+        "loss": "$40M+ incident response",
+        "detail": "Command injection in build pipeline led to supply chain attack affecting 18,000 organizations"
+      }
+    ]
+  },
+  "Cookie Without Secure Flag": {
+    "min": 5000,
+    "max": 500000,
+    "examples": [
+      {
+        "company": "Various e-commerce sites",
+        "loss": "$5K–$500K per incident",
+        "detail": "Session cookies transmitted over HTTP allow network attackers to hijack authenticated sessions"
+      }
+    ]
+  },
+  "Missing Anti-Clickjacking Header": {
+    "min": 10000,
+    "max": 1000000,
+    "examples": [
+      {
+        "company": "Facebook (2009)",
+        "loss": "Millions of users affected",
+        "detail": "Clickjacking attack tricked users into liking pages and granting permissions without consent"
+      }
+    ]
+  },
+  "Vulnerable Dependency": {
+    "min": 10000,
+    "max": 5000000,
+    "examples": [
+      {
+        "company": "Log4Shell affected (2021)",
+        "loss": "$10B+ global remediation",
+        "detail": "CVE-2021-44228 in Log4j affected millions of systems — remote code execution with no auth"
+      }
+    ]
+  },
+  "Cross-Site Request Forgery": {
+    "min": 25000,
+    "max": 5000000,
+    "examples": [
+      {
+        "company": "Netflix (2006)",
+        "loss": "Undisclosed",
+        "detail": "CSRF vulnerability allowed attackers to change account email and password of any user"
+      }
+    ]
+  },
+  "Default Credentials": {
+    "min": 500000,
+    "max": 100000000,
+    "examples": [
+      {
+        "company": "Mirai Botnet (2016)",
+        "loss": "$110M+ economic damage",
+        "detail": "Default credentials on IoT devices used to build botnet that took down major internet infrastructure"
+      }
+    ]
+  },
+  "Directory Browsing": {
+    "min": 10000,
+    "max": 1000000,
+    "examples": [
+      {
+        "company": "Multiple healthcare providers",
+        "loss": "$100K–$1M HIPAA fines",
+        "detail": "Directory listing exposed patient records, config files, and backup databases"
+      }
+    ]
+  },
+  "Missing Rate Limiting": {
+    "min": 10000,
+    "max": 1000000,
+    "examples": [
+      {
+        "company": "Alibaba (2022)",
+        "loss": "1 billion records exposed",
+        "detail": "No rate limiting on search API allowed scraping of entire user database over months"
+      }
+    ]
+  }
+}

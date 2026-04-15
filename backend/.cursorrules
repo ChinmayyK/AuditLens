@@ -1,0 +1,114 @@
+GLOBAL CONTEXT — Read before every single response.
+
+PROJECT: ShieldSentinel — Professional Security Assessment Platform
+MACHINE: Mac M2 (Apple Silicon) — cloud scalable later
+DEVELOPER: Full stack, beginner to security tooling
+
+ARCHITECTURE PHILOSOPHY:
+- Clean separation: apps/ services/ packages/ infra/
+- Every service independently deployable
+- Environment-agnostic (local Docker now, K8s later)
+- No hardcoded ports or URLs anywhere — always from env
+
+
+STACK — NEVER CHANGE:
+
+Frontend (apps/web + apps/landing):
+- React 18 + Vite + TypeScript
+- Tailwind CSS + Framer Motion
+- Monaco Editor (@monaco-editor/react)
+- Recharts + Cytoscape.js
+- React Router v6
+- Axios + React Query
+- React Hot Toast
+- Lucide React icons
+- Socket.io client
+
+Backend (services/api):
+- Python 3.11
+- FastAPI + Uvicorn
+- SQLAlchemy 2.0 + Alembic
+- Celery 5 + Redis
+- Pydantic v2
+- python-jose (JWT)
+- passlib + bcrypt
+- httpx + aiofiles
+- ReportLab (PDF)
+- SSLyze
+- python-magic
+
+Database:
+- PostgreSQL 15
+
+Cache + Queue:
+- Redis 7
+
+Reverse Proxy:
+- Nginx (gateway)
+
+Containers:
+- Docker + docker-compose
+- ZAP must have: platform: linux/amd64 (M2 fix)
+
+AI / LLM:
+Primary: OpenRouter API
+Models in fallback order:
+  1. qwen/qwen3-coder:free
+  2. meta-llama/llama-3.3-70b-instruct:free
+  3. nousresearch/hermes-3-llama-3.1-405b:free
+  4. openai/gpt-oss-120b:free
+
+Fallback: Groq API
+Models:
+  1. llama-3.3-70b-versatile
+  2. qwen/qwen3-32b
+  3. moonshotai/kimi-k2-instruct-0905
+
+Future (plug in later, do not break existing):
+- Google Gemini (Vertex AI)
+- AWS Bedrock
+
+ENV VARS NEEDED:
+OPENROUTER_API_KEY=
+GROQ_API_KEY=
+DATABASE_URL=postgresql://postgres:postgres@postgres:5432/shieldsentinel
+REDIS_URL=redis://redis:6379/0
+ZAP_URL=http://zap:8090
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/1
+JWT_SECRET=
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_DAYS=7
+GOOGLE_CLIENT_ID=
+UPLOAD_DIR=/tmp/shieldsentinel/uploads
+REPORTS_DIR=/tmp/shieldsentinel/reports
+ENVIRONMENT=development
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4000
+
+
+
+SECURITY TOOLS (installed in Docker):
+DAST: OWASP ZAP, Nuclei, FFUF, Nikto, Wapiti
+RECON: Nmap, theHarvester, Amass, Gobuster
+INJECTION: SQLMap, XSStrike, Commix, NoSQLMap
+SSL: SSLyze (Python), testssl.sh
+SAST: Semgrep, Bandit, Gitleaks, TruffleHog, Trivy
+STRESS: wrk, hey (HTTP load testing)
+AUTH TESTING: jwt_tool
+API TESTING: ZAP API mode, custom scripts
+
+ATTACK PHILOSOPHY:
+- Every scan: recon first, then attack, then verify
+- Parameter extraction before injection (targeted not spray)
+- Concurrent attack threads via Celery
+- Rate limit testing on every endpoint
+- Session abuse and token replay testing
+- Input fuzzing on every discovered form field
+- All attacks require user to confirm target ownership
+- Results show: attacked / defended / not tested honestly
+
+
+
+
+TECH STACK SUMMARY
+LayerTechnologyFrontendReact 18, Vite, TypeScript, Tailwind, Framer MotionCode EditorMonaco EditorChartsRecharts, Cytoscape.jsBackendPython 3.11, FastAPI, SQLAlchemy 2.0Task QueueCelery 5 + Redis 7DatabasePostgreSQL 15AuthJWT + Google OAuth 2.0ProxyNginxContainersDocker + docker-composeDAST ToolsZAP, Nuclei, FFUF, Nikto, WapitiRecon ToolsNmap, theHarvester, Amass, GobusterInjectionSQLMap, XSStrike, CommixSAST ToolsSemgrep, Bandit, Gitleaks, TruffleHog, TrivyStress Testwrk, heySSLSSLyze, testssl.shAI PrimaryOpenRouter (qwen3-coder, llama-3.3-70b)AI FallbackGroq (llama-3.3-70b, qwen3-32b)AI FutureGemini, AWS Bedrock (plug in later)ReportsReportLab PDFRealtimeWebSocket (FastAPI native)

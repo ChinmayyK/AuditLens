@@ -1,0 +1,258 @@
+
+
+x-api-common: &api-common
+  build:
+    context: ../
+    dockerfile: docker/Dockerfile.api
+  env_file: ../.env
+  volumes:
+    - ../api:/app
+    - ../packages:/packages
+    # Mount only nuclei-templates so the image wordlists under
+    # /scanner-tools/wordlists are not hidden by an empty volume.
+    - scanner_tools:/scanner-tools/nuclei-templates
+    - upload_data:/tmp/shieldsentinel
+  deploy:
+    resources:
+      limits:
+        memory: 1536M
+      reservations:
+        memory: 512M
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+
+  # ── Nginx Gateway ───────────────────────────────────
+  gateway:
+    image: nginx:1.25-alpine
+    ports:
+      - "99:80"
+    volumes:
+      - ../gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - web
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── FastAPI Backend ─────────────────────────────────
+  api:
+    <<: *api-common
+    ports:
+      - "9997:9997"
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 9997
+      --reload
+      --log-level info
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9997/api/v1/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ── Celery Workers (named queues) ───────────────────
+  worker-recon:
+    <<: *api-common
+    command: >
+      celery -A workers.celery_app worker
+      --loglevel=info
+      --concurrency=2
+      -Q recon
+      -n worker-recon@%h
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A workers.celery_app inspect ping -d worker-recon@$(hostname) | grep -q pong"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  worker-dast:
+    <<: *api-common
+    depends_on:
+      zap:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A workers.celery_app worker
+      --loglevel=info
+      --concurrency=2
+      -Q dast
+      -n worker-dast@%h
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A workers.celery_app inspect ping -d worker-dast@$(hostname) | grep -q pong"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  worker-sast:
+    <<: *api-common
+    command: >
+      celery -A workers.celery_app worker
+      --loglevel=info
+      --concurrency=2
+      -Q sast
+      -n worker-sast@%h
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A workers.celery_app inspect ping -d worker-sast@$(hostname) | grep -q pong"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  worker-ai:
+    <<: *api-common
+    command: >
+      celery -A workers.celery_app worker
+      --loglevel=info
+      --concurrency=2
+      -Q ai,reports
+      -n worker-ai@%h
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A workers.celery_app inspect ping -d worker-ai@$(hostname) | grep -q pong"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ── Celery Beat (scheduled tasks) ──────────────────
+  beat:
+    <<: *api-common
+    command: >
+      celery -A workers.celery_app beat
+      --loglevel=info
+    restart: unless-stopped
+
+  # ── Flower (Celery monitoring) ──────────────────────
+  flower:
+    <<: *api-common
+    ports:
+      - "9999:9999"
+    command: >
+      celery -A workers.celery_app flower
+      --port=9999
+    restart: unless-stopped
+
+  # ── React Scanner App ───────────────────────────────
+  web:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "9998:9998"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-}
+      - VITE_WS_URL=${VITE_WS_URL:-}
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+      - VITE_PROXY_TARGET=http://api:9997
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 9998"
+    restart: unless-stopped
+
+
+  # ── PostgreSQL ──────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Redis ───────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── OWASP ZAP ──────────────────────────────────────
+  zap:
+    image: zaproxy/zap-stable
+    ports:
+      - "8090:8090"
+    command: >
+      zap.sh -daemon
+      -host 0.0.0.0
+      -port 8090
+      -config api.disablekey=false
+      -config api.key=${ZAP_API_KEY}
+      -config api.addrs.addr.name=.*
+      -config api.addrs.addr.regex=true
+      -config connection.timeoutInSecs=30
+    volumes:
+      - /tmp:/zap/wrk
+    shm_size: '512mb'
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1G
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f",
+             "http://localhost:8090/JSON/core/view/version/?apikey=${ZAP_API_KEY}"]
+      interval: 20s
+      timeout: 15s
+      retries: 20
+      start_period: 400s
+
+  seed:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.api
+    env_file: ../.env
+    volumes:
+      - ../api:/app
+      - ../scripts:/scripts
+    command: python /scripts/seed_demo.py
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - seed
+
+volumes:
+  postgres_data:
+  redis_data:
+  scanner_tools:
+  upload_data:

@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+html, body {
+  scroll-behavior: auto;
+}
+
+body {
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.18), transparent 38%),
+    radial-gradient(circle at 85% 20%, rgba(59, 130, 246, 0.12), transparent 32%),
+    radial-gradient(circle at 50% 100%, rgba(30, 41, 59, 0.85), transparent 45%);
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1e293b; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* Monaco editor container fix */
+.monaco-editor-container { border-radius: 0; }
+.monaco-editor .margin { background: #1e293b !important; }
+

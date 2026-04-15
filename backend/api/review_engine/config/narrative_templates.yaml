@@ -1,0 +1,86 @@
+# ── Narrative Templates (v4) ──────────────────────────
+# Jinja2 templates for generating human-like narrative output.
+# Used by NarrativeBuilder.
+
+# ── Executive Summary ─────────────────────────────────
+executive_summary: |
+  {% if new_count == 0 and existing_count == 0 %}This PR looks clean — no security findings detected. ✅
+  {% elif new_count == 0 and existing_count > 0 %}This PR doesn't introduce new security issues. {{ existing_count }} pre-existing finding{{ 's' if existing_count != 1 else '' }} noted but not caused by this change.
+  {% elif decision == 'block' %}🚫 This PR introduces {{ new_count }} new security issue{{ 's' if new_count != 1 else '' }}{% if top_finding %}, including a **{{ top_finding.severity }} {{ top_finding.vuln_type }}** in `{{ top_finding.file_path }}`{% endif %}. Changes requested before merge.
+  {% elif decision == 'request_changes' %}⚠️ This PR introduces {{ new_count }} new finding{{ 's' if new_count != 1 else '' }} that should be reviewed{% if top_finding %} — most notably a **{{ top_finding.severity }} {{ top_finding.vuln_type }}** in `{{ top_finding.file_path }}`{% endif %}.
+  {% else %}This PR introduces {{ new_count }} minor finding{{ 's' if new_count != 1 else '' }}. Approved with notes.
+  {% endif %}
+
+# ── Full Narrative ────────────────────────────────────
+narrative: |
+  ## 🧠 ShieldSentinel Intelligence Report
+
+  {{ executive_summary }}
+
+  {% if prioritized|length > 0 %}
+  ### Priority-Ranked Issues
+
+  {% for f in prioritized[:5] %}**{{ f.priority_rank }}. {{ f.vuln_type }}** (`{{ f.severity }}`){% if f.status == 'new' %} 🆕{% endif %}
+  📍 `{{ f.file_path or 'unknown' }}:{{ f.line_number or '?' }}`{% if f.tools|length > 1 %} | 🔗 {{ f.tools|join(', ') }}{% endif %}
+  📊 Priority Score: **{{ f.priority_score|round(1) }}/100** — {{ f.reasoning }}
+  {% if f.fix_suggestion %}💡 **Fix:** {{ f.fix_suggestion }}{% endif %}
+
+  {% endfor %}{% endif %}
+
+  {% if explanation.causal_chain|length > 0 %}
+  ### Decision Reasoning
+
+  **{{ explanation.decision|upper }}** (confidence: {{ (explanation.confidence * 100)|round(0) }}%)
+
+  {% for step in explanation.causal_chain %}{{ step.step }}. {{ step.description }}{% if step.evidence %} — _{{ step.evidence }}_{% endif %}
+  {% endfor %}
+
+  {% if explanation.what_if|length > 0 %}
+  ### What Would Change the Decision?
+
+  {% for w in explanation.what_if %}- **If** {{ w.condition }} → {{ w.outcome }} (decision: {{ w.new_decision }})
+  {% endfor %}{% endif %}{% endif %}
+
+  {% if insights|length > 0 %}
+  ### Insights
+
+  {% for i in insights %}{{ i.emoji }} **{{ i.title }}**
+  {{ i.description }}
+  {% if i.recommendation %}→ _{{ i.recommendation }}_{% endif %}
+
+  {% endfor %}{% endif %}
+
+  {% if risk_assessment %}
+  ### Risk Assessment
+
+  | Dimension | Level |
+  |-----------|-------|
+  | **Overall Risk** | {{ risk_assessment.risk_level|upper }} ({{ risk_assessment.risk_score|round(0) }}/100) |
+  | **Attack Surface** | {{ risk_assessment.attack_surface_change }} |
+  | **Data Exposure** | {{ risk_assessment.data_exposure_risk }} |
+  | **Auth Impact** | {{ risk_assessment.auth_impact }} |
+
+  {{ risk_assessment.risk_summary }}
+  {% endif %}
+
+# ── Insight templates by type ─────────────────────────
+insight_templates:
+  hotspot: |
+    {{ emoji }} **{{ title }}**
+    {{ description }}
+    → _{{ recommendation }}_
+
+  category_cluster: |
+    {{ emoji }} **{{ title }}**
+    {{ description }}
+    → _{{ recommendation }}_
+
+  false_positive_signal: |
+    {{ emoji }} **{{ title }}**
+    {{ description }}
+    → _{{ recommendation }}_
+
+  fix_group: |
+    {{ emoji }} **{{ title }}**
+    {{ description }}
+    → _{{ recommendation }}_

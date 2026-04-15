@@ -1,0 +1,100 @@
+# ─────────────────────────────────────────────────────────
+# Comment Templates — ShieldSentinel Review Engine
+# ─────────────────────────────────────────────────────────
+# Jinja2 templates for rendering review comments per severity.
+# Variables available: vuln_type, tool, message, severity,
+#   cvss, fix, file_path, line_number, category, cwe_id, cve_id
+
+templates:
+  critical: |
+    🚨 **CRITICAL: {{ vuln_type }}**{% if status == 'new' %} 🆕{% elif status == 'existing' %} 📌{% endif %}
+    **Tool:** `{{ tool }}`{% if corroborated_by %} | 🔗 **Also found by:** {{ corroborated_by | join(', ') }}{% endif %} | **CVSS:** {{ cvss or 'N/A' }}{% if cwe_id %} | **CWE:** {{ cwe_id }}{% endif %}{% if cve_id %} | **CVE:** {{ cve_id }}{% endif %}
+    {% if change_risk and change_risk != 'medium' %}⚡ **Change Risk:** {{ change_risk | upper }}{% endif %}
+
+    {{ message }}
+    {% if fix %}
+    > 💡 **Suggested fix:** {{ fix }}
+    {% endif %}
+
+  high: |
+    🔴 **HIGH: {{ vuln_type }}**{% if status == 'new' %} 🆕{% elif status == 'existing' %} 📌{% endif %}
+    **Tool:** `{{ tool }}`{% if corroborated_by %} | 🔗 **Also found by:** {{ corroborated_by | join(', ') }}{% endif %}{% if cvss %} | **CVSS:** {{ cvss }}{% endif %}{% if cwe_id %} | **CWE:** {{ cwe_id }}{% endif %}
+    {% if change_risk and change_risk != 'medium' %}⚡ **Change Risk:** {{ change_risk | upper }}{% endif %}
+
+    {{ message }}
+    {% if fix %}
+    > 💡 **Fix:** {{ fix }}
+    {% endif %}
+
+  medium: |
+    🟡 **MEDIUM: {{ vuln_type }}**{% if status == 'new' %} 🆕{% elif status == 'existing' %} 📌{% endif %}
+    **Tool:** `{{ tool }}`{% if corroborated_by %} | 🔗 {{ corroborated_by | join(', ') }}{% endif %}{% if cwe_id %} | **CWE:** {{ cwe_id }}{% endif %}
+
+    {{ message }}
+    {% if fix %}
+    > 💡 {{ fix }}
+    {% endif %}
+
+  low: |
+    🔵 **LOW: {{ vuln_type }}**{% if status == 'new' %} 🆕{% endif %}
+    {{ message }}
+    {% if fix %}
+    > {{ fix }}
+    {% endif %}
+
+  info: |
+    ℹ️ **{{ vuln_type }}**: {{ message }}
+
+# Summary template — rendered once per review
+summary: |
+  ## 🛡️ ShieldSentinel Security Review
+
+  | Metric | Value |
+  |--------|-------|
+  | **Score** | {{ score }} / {{ max_score }} |
+  | **Decision** | {{ decision_emoji }} **{{ decision | upper }}** |
+  | **Total Findings** | {{ total_findings }} |
+  | **On Changed Lines** | {{ relevant_count }} |
+  | **Contextual** | {{ contextual_count }} |
+  {% if new_count is defined %}| 🆕 **New Issues** | {{ new_count }} |
+  | 📌 **Existing Issues** | {{ existing_count }} |
+  {% endif %}{% if correlated_groups is defined and correlated_groups > 0 %}| 🔗 **Correlated Groups** | {{ correlated_groups }} |
+  {% endif %}
+
+  ### Severity Breakdown
+
+  | Severity | Count | Weighted Impact |
+  |----------|-------|-----------------|
+  {% for s in severity_breakdown %}| {{ s.emoji }} {{ s.severity | capitalize }} | {{ s.count }} | {{ s.impact | round(1) }} |
+  {% endfor %}
+
+  ### Tool Breakdown
+
+  | Tool | Findings | Trust | Contribution |
+  |------|----------|-------|-------------|
+  {% for t in tool_breakdown %}| `{{ t.tool }}` | {{ t.count }} | {{ t.trust }}x | {{ t.contribution | round(1) }} |
+  {% endfor %}
+  {% if blockers %}
+  ### ⛔ Hard Blockers
+
+  {% for b in blockers %}- {{ b }}
+  {% endfor %}
+  {% endif %}
+  {% if policy_overrides %}
+  ### 📋 Policy Overrides Applied
+
+  {% for p in policy_overrides %}- {{ p }}
+  {% endfor %}
+  {% endif %}
+  {% if top_issues %}
+  ### 🔝 Top Issues
+
+  {% for c in top_issues %}- {% if c.status is defined and c.status == 'new' %}🆕 {% endif %}**{{ c.file_path }}:{{ c.line_number }}** — {{ c.vuln_type }} (`{{ c.severity }}`){% if c.corroborated_by is defined and c.corroborated_by %} 🔗{% endif %}
+  {% endfor %}
+  {% endif %}
+
+# Decision emoji mapping
+decision_emojis:
+  approve: "✅"
+  request_changes: "⚠️"
+  block: "🚫"

@@ -1,0 +1,20 @@
+.DS_Store
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Local secrets and env files
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*client_secret*.json
+
+# IDE and OS files
+.idea/
+.vscode/

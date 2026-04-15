@@ -1,0 +1,115 @@
+# ── Priority Scoring Rules ─────────────────────────────
+# Config-driven heuristics for multi-factor priority ranking.
+# Used by PriorityRanker to re-rank findings beyond severity.
+
+# Factor weights — must sum to 1.0
+factor_weights:
+  exploitability: 0.35
+  blast_radius: 0.25
+  fix_effort: 0.15     # inverted: easy fix = higher priority
+  recency: 0.15
+  corroboration: 0.10
+
+# ── Exploitability scoring by category ─────────────────
+# How easily can this be exploited remotely?
+# Scale: 0.0 (not exploitable) → 1.0 (trivially exploitable)
+exploitability:
+  injection: 0.95       # SQLi, command injection — trivially exploitable
+  xss: 0.85             # Requires victim interaction
+  secrets: 0.90         # Immediate credential compromise
+  authentication: 0.80  # Auth bypass = full access
+  authorization: 0.75   # Privilege escalation
+  crypto: 0.60          # Requires specific conditions
+  deserialization: 0.85 # Often RCE
+  ssrf: 0.80            # Server-side request forgery
+  path_traversal: 0.75  # File system access
+  misconfiguration: 0.50 # Context-dependent
+  information_disclosure: 0.40 # Usually low direct impact
+  default: 0.50
+
+# ── Blast radius by file path patterns ─────────────────
+# Which files have the widest impact when compromised?
+# Regex patterns matched against file_path.
+blast_radius:
+  patterns:
+    - pattern: "(auth|login|session|oauth|jwt|token)"
+      score: 0.95
+      label: "Authentication/session management"
+    - pattern: "(payment|billing|stripe|checkout)"
+      score: 0.95
+      label: "Payment processing"
+    - pattern: "(admin|superuser|management)"
+      score: 0.90
+      label: "Admin interface"
+    - pattern: "(api|endpoint|route|view|controller)"
+      score: 0.80
+      label: "API layer"
+    - pattern: "(model|schema|migration|db|database)"
+      score: 0.75
+      label: "Data layer"
+    - pattern: "(middleware|interceptor|filter)"
+      score: 0.70
+      label: "Middleware"
+    - pattern: "(util|helper|common|shared|lib)"
+      score: 0.60
+      label: "Utility/shared code"
+    - pattern: "(test|spec|fixture|mock|fake)"
+      score: 0.10
+      label: "Test code"
+    - pattern: "(config|settings|env)"
+      score: 0.65
+      label: "Configuration"
+    - pattern: "(doc|readme|changelog)"
+      score: 0.05
+      label: "Documentation"
+  default: 0.50
+
+# ── Fix effort by vuln type ───────────────────────────
+# How hard is it to fix? (0.0 = trivial, 1.0 = architectural)
+# Note: INVERTED for priority — easy fixes get HIGHER priority
+# because they should be fixed first.
+fix_effort:
+  "Hardcoded password": 0.15       # Remove the string
+  "Hardcoded API Key": 0.15
+  "Leaked Database Password": 0.15
+  "Debug Mode Enabled": 0.10       # Flip a config flag
+  "Verbose Logging": 0.10
+  "Missing CSRF Token": 0.30       # Add middleware
+  "SQL Injection": 0.35            # Switch to parameterized queries
+  "Command Injection": 0.40        # Sanitize + subprocess rework
+  "XSS Vulnerability": 0.35       # Add output encoding
+  "Weak Hash Algorithm": 0.25      # Swap algorithm call
+  "SSL Verification Disabled": 0.15 # Remove verify=False
+  "Path Traversal": 0.40
+  "Auth Bypass": 0.70              # Architectural — auth redesign
+  "SSRF": 0.50
+  "Insecure Deserialization": 0.55
+  default: 0.40
+
+# ── Recency scoring ──────────────────────────────────
+recency:
+  new: 1.0        # New in this PR — highest priority
+  existing: 0.3   # Pre-existing debt
+  fixed: 0.0      # Already resolved
+
+# ── Corroboration scoring ────────────────────────────
+corroboration:
+  1: 0.3    # Single tool — moderate confidence
+  2: 0.7    # Two tools agree — high confidence
+  3: 0.9    # Three+ tools — very high confidence
+  default: 1.0
+
+# ── False positive indicators ────────────────────────
+# File patterns that suggest a finding may be a false positive.
+false_positive_indicators:
+  file_patterns:
+    - "(test_|_test\\.py|tests/|spec/|__tests__)"
+    - "(fixture|mock|fake|stub|dummy)"
+    - "(example|sample|demo|template)"
+    - "(vendor|node_modules|third_party)"
+  vuln_type_in_test_files:
+    # These vuln types in test files are almost always FPs
+    - "Hardcoded password"
+    - "Hardcoded API Key"
+    - "Debug Mode Enabled"
+    - "SQL Injection"

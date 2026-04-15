@@ -1,0 +1,421 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "ShieldSentinel Review Engine — Config-Driven Rules. Edit this file and the next review will use the new values. No restart needed.",
+    "constraint": "All detection rules and scoring weights MUST be loaded from this file. Hardcoding rules disqualifies the team."
+  },
+
+  "weights": {
+    "severity_weights": {
+      "critical": 25,
+      "high": 15,
+      "medium": 7,
+      "low": 2,
+      "info": 0
+    },
+
+    "tool_trust": {
+      "semgrep": 1.0,
+      "bandit": 0.9,
+      "gitleaks": 1.0,
+      "trufflehog": 0.95,
+      "trivy": 0.85,
+      "zap": 0.8,
+      "nuclei": 0.9,
+      "ffuf": 0.6,
+      "nikto": 0.7,
+      "pattern_detector": 0.85,
+      "default": 0.8
+    },
+
+    "category_multipliers": {
+      "injection": 1.3,
+      "secrets": 1.5,
+      "xss": 1.1,
+      "authentication": 1.2,
+      "authorization": 1.2,
+      "cryptography": 1.0,
+      "misconfiguration": 0.7,
+      "dependency": 0.6,
+      "information_disclosure": 0.5,
+      "default": 1.0
+    },
+
+    "category_keywords": {
+      "injection": ["sql injection", "sqli", "command injection", "code injection", "ldap injection", "xpath injection", "nosql injection"],
+      "secrets": ["secret", "api key", "password", "token", "credential", "private key", "hardcoded", "leaked"],
+      "xss": ["xss", "cross-site scripting", "reflected", "stored xss"],
+      "authentication": ["authentication", "auth bypass", "brute force", "session", "jwt"],
+      "authorization": ["authorization", "privilege", "access control", "idor", "insecure direct"],
+      "cryptography": ["crypto", "cipher", "ssl", "tls", "hash", "encryption", "weak algorithm"],
+      "misconfiguration": ["misconfiguration", "missing header", "cors", "debug", "verbose error", "directory listing"],
+      "dependency": ["dependency", "vulnerable package", "outdated", "cve-", "known vulnerability"],
+      "information_disclosure": ["information disclosure", "info leak", "path disclosure", "stack trace", "server version", "exposed"]
+    },
+
+    "relevance_boost": 1.5,
+    "max_score": 100,
+    "new_finding_boost": 1.3,
+
+    "status_weights": {
+      "new": 1.0,
+      "existing": 0.3,
+      "fixed": 0.0
+    },
+
+    "change_risk_weights": {
+      "critical": 1.5,
+      "high": 1.2,
+      "medium": 1.0,
+      "low": 0.7,
+      "none": 0.5
+    },
+
+    "corroboration_boost": {
+      "1": 1.0,
+      "2": 1.4,
+      "3": 1.7,
+      "default": 1.8
+    },
+
+    "dedup_line_window": 2,
+    "diminishing_start": 3,
+    "diminishing_decay": 0.6,
+
+    "priority_factor_weights": {
+      "exploitability": 0.35,
+      "blast_radius": 0.25,
+      "fix_effort": 0.15,
+      "recency": 0.15,
+      "corroboration": 0.10
+    },
+
+    "exploitability": {
+      "injection": 0.95,
+      "xss": 0.85,
+      "secrets": 0.90,
+      "authentication": 0.80,
+      "authorization": 0.75,
+      "crypto": 0.60,
+      "deserialization": 0.85,
+      "ssrf": 0.80,
+      "path_traversal": 0.75,
+      "misconfiguration": 0.50,
+      "information_disclosure": 0.40,
+      "default": 0.50
+    },
+
+    "blast_radius": {
+      "patterns": [
+        {"pattern": "(auth|login|session|oauth|jwt|token)", "score": 0.95, "label": "Authentication/session management"},
+        {"pattern": "(payment|billing|stripe|checkout)", "score": 0.95, "label": "Payment processing"},
+        {"pattern": "(admin|superuser|management)", "score": 0.90, "label": "Admin interface"},
+        {"pattern": "(api|endpoint|route|view|controller)", "score": 0.80, "label": "API layer"},
+        {"pattern": "(model|schema|migration|db|database)", "score": 0.75, "label": "Data layer"},
+        {"pattern": "(middleware|interceptor|filter)", "score": 0.70, "label": "Middleware"},
+        {"pattern": "(util|helper|common|shared|lib)", "score": 0.60, "label": "Utility/shared code"},
+        {"pattern": "(test|spec|fixture|mock|fake)", "score": 0.10, "label": "Test code"},
+        {"pattern": "(config|settings|env)", "score": 0.65, "label": "Configuration"},
+        {"pattern": "(doc|readme|changelog)", "score": 0.05, "label": "Documentation"}
+      ],
+      "default": 0.50
+    },
+
+    "fix_effort": {
+      "Hardcoded password": 0.15,
+      "Hardcoded API Key": 0.15,
+      "Leaked Database Password": 0.15,
+      "Debug Mode Enabled": 0.10,
+      "Verbose Logging": 0.10,
+      "Missing CSRF Token": 0.30,
+      "SQL Injection": 0.35,
+      "Command Injection": 0.40,
+      "XSS Vulnerability": 0.35,
+      "Weak Hash Algorithm": 0.25,
+      "SSL Verification Disabled": 0.15,
+      "Path Traversal": 0.40,
+      "Auth Bypass": 0.70,
+      "SSRF": 0.50,
+      "Insecure Deserialization": 0.55,
+      "default": 0.40
+    },
+
+    "recency": {
+      "new": 1.0,
+      "existing": 0.3,
+      "fixed": 0.0
+    },
+
+    "corroboration_priority": {
+      "1": 0.3,
+      "2": 0.7,
+      "3": 0.9,
+      "default": 1.0
+    }
+  },
+
+  "thresholds": {
+    "approve": {
+      "max_score": 15,
+      "max_critical": 0,
+      "max_high": 0
+    },
+
+    "request_changes": {
+      "max_score": 50,
+      "max_critical": 0,
+      "max_high": 3
+    },
+
+    "hard_blockers": [
+      {
+        "category": "secrets",
+        "min_severity": "low",
+        "reason": "Secret/credential leak detected — must be resolved before merge"
+      },
+      {
+        "category": "injection",
+        "min_severity": "high",
+        "reason": "High-severity injection vulnerability — code must be fixed"
+      },
+      {
+        "category": "authentication",
+        "min_severity": "critical",
+        "reason": "Critical authentication bypass — merge blocked"
+      }
+    ],
+
+    "severity_order": {
+      "critical": 4,
+      "high": 3,
+      "medium": 2,
+      "low": 1,
+      "info": 0
+    },
+
+    "policy_overrides": {
+      "auto_approve_existing_only": true,
+      "block_any_new_critical": true,
+      "require_fix_for_new_secrets": true
+    }
+  },
+
+  "custom_rules": [
+    {
+      "id": "SQLI-001",
+      "name": "String concatenation in SQL query",
+      "pattern": "(?i)(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE).*[\"']\\s*\\+\\s*\\w+",
+      "severity": "high",
+      "category": "injection",
+      "languages": [".py", ".js", ".ts", ".rb", ".java", ".php"],
+      "message": "SQL query built with string concatenation — vulnerable to SQL injection",
+      "suggestion": "Use parameterized queries or an ORM",
+      "confidence": 0.9,
+      "enabled": true
+    },
+    {
+      "id": "SQLI-002",
+      "name": "f-string in SQL query",
+      "pattern": "(?i)(?:execute|cursor|query|raw)\\s*\\(\\s*f[\"'].*\\{.*\\}",
+      "severity": "high",
+      "category": "injection",
+      "languages": [".py"],
+      "message": "SQL query uses f-string interpolation — vulnerable to SQL injection",
+      "suggestion": "Use parameterized queries: cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))",
+      "confidence": 0.95,
+      "enabled": true
+    },
+    {
+      "id": "SQLI-003",
+      "name": "format() in SQL query",
+      "pattern": "(?i)(?:execute|cursor|query|raw)\\s*\\(.*\\.format\\s*\\(",
+      "severity": "high",
+      "category": "injection",
+      "languages": [".py"],
+      "message": "SQL query uses .format() string interpolation — vulnerable to injection",
+      "suggestion": "Use parameterized queries instead of string formatting",
+      "confidence": 0.9,
+      "enabled": true
+    },
+    {
+      "id": "CMDI-001",
+      "name": "Shell command injection",
+      "pattern": "(?i)(?:os\\.system|subprocess\\.call|subprocess\\.Popen|exec|eval)\\s*\\(.*\\+\\s*\\w+",
+      "severity": "critical",
+      "category": "injection",
+      "languages": [".py"],
+      "message": "Shell command built with string concatenation — vulnerable to command injection",
+      "suggestion": "Use subprocess with a list of arguments instead of shell=True",
+      "confidence": 0.85,
+      "enabled": true
+    },
+    {
+      "id": "CMDI-002",
+      "name": "Shell=True in subprocess",
+      "pattern": "(?i)subprocess\\.\\w+\\(.*shell\\s*=\\s*True",
+      "severity": "medium",
+      "category": "injection",
+      "languages": [".py"],
+      "message": "subprocess called with shell=True — potential command injection vector",
+      "suggestion": "Use subprocess with shell=False and pass args as a list",
+      "confidence": 0.8,
+      "enabled": true
+    },
+    {
+      "id": "SECRET-001",
+      "name": "Hardcoded password",
+      "pattern": "(?i)(?:password|passwd|pwd)\\s*=\\s*[\"'][^\"']{8,}[\"']",
+      "severity": "critical",
+      "category": "secrets",
+      "languages": [],
+      "message": "Hardcoded password detected in source code",
+      "suggestion": "Move secrets to environment variables or a secrets manager",
+      "confidence": 0.85,
+      "enabled": true
+    },
+    {
+      "id": "SECRET-002",
+      "name": "Hardcoded API key",
+      "pattern": "(?i)(?:api_?key|apikey|access_?key|auth_?token)\\s*=\\s*[\"'][A-Za-z0-9_\\-]{20,}[\"']",
+      "severity": "critical",
+      "category": "secrets",
+      "languages": [],
+      "message": "Hardcoded API key or token detected",
+      "suggestion": "Use environment variables: os.getenv('API_KEY')",
+      "confidence": 0.9,
+      "enabled": true
+    },
+    {
+      "id": "SECRET-003",
+      "name": "Private key in source",
+      "pattern": "-----BEGIN (?:RSA |EC |DSA )?PRIVATE KEY-----",
+      "severity": "critical",
+      "category": "secrets",
+      "languages": [],
+      "message": "Private key embedded in source code",
+      "suggestion": "Store private keys in a secure vault, never in source control",
+      "confidence": 0.99,
+      "enabled": true
+    },
+    {
+      "id": "SECRET-004",
+      "name": "AWS credentials",
+      "pattern": "(?:AKIA|ASIA)[A-Z0-9]{16}",
+      "severity": "critical",
+      "category": "secrets",
+      "languages": [],
+      "message": "AWS access key ID detected in source code",
+      "suggestion": "Rotate this key immediately and use IAM roles instead",
+      "confidence": 0.95,
+      "enabled": true
+    },
+    {
+      "id": "XSS-001",
+      "name": "innerHTML assignment",
+      "pattern": "\\.innerHTML\\s*=",
+      "severity": "medium",
+      "category": "xss",
+      "languages": [".js", ".ts", ".jsx", ".tsx"],
+      "message": "Direct innerHTML assignment — potential XSS vector",
+      "suggestion": "Use textContent or a sanitization library like DOMPurify",
+      "confidence": 0.75,
+      "enabled": true
+    },
+    {
+      "id": "XSS-002",
+      "name": "document.write usage",
+      "pattern": "document\\.write\\s*\\(",
+      "severity": "medium",
+      "category": "xss",
+      "languages": [".js", ".ts", ".html"],
+      "message": "document.write() can introduce XSS vulnerabilities",
+      "suggestion": "Use DOM manipulation methods instead",
+      "confidence": 0.7,
+      "enabled": true
+    },
+    {
+      "id": "XSS-003",
+      "name": "Unescaped template rendering",
+      "pattern": "\\{\\{\\{.*\\}\\}\\}|\\{%\\s*autoescape\\s+false",
+      "severity": "high",
+      "category": "xss",
+      "languages": [".html", ".jinja", ".jinja2", ".hbs"],
+      "message": "Unescaped template output — XSS vulnerability",
+      "suggestion": "Use double-brace escaping {{ }} or enable autoescape",
+      "confidence": 0.85,
+      "enabled": true
+    },
+    {
+      "id": "CRYPTO-001",
+      "name": "Weak hash algorithm (MD5/SHA1)",
+      "pattern": "(?i)(?:hashlib\\.md5|hashlib\\.sha1|MD5|SHA1)\\s*\\(",
+      "severity": "medium",
+      "category": "cryptography",
+      "languages": [".py", ".js", ".java"],
+      "message": "Weak hash algorithm (MD5/SHA1) used — cryptographically broken",
+      "suggestion": "Use SHA-256 or bcrypt for password hashing",
+      "confidence": 0.9,
+      "enabled": true
+    },
+    {
+      "id": "CRYPTO-002",
+      "name": "Insecure random",
+      "pattern": "(?i)(?:random\\.random|Math\\.random|rand\\(\\))\\s*",
+      "severity": "medium",
+      "category": "cryptography",
+      "languages": [".py", ".js", ".java", ".rb"],
+      "message": "Insecure random number generator used for security-sensitive operation",
+      "suggestion": "Use secrets.token_hex() (Python) or crypto.randomBytes() (Node)",
+      "confidence": 0.6,
+      "enabled": true
+    },
+    {
+      "id": "AUTH-001",
+      "name": "JWT verify disabled",
+      "pattern": "(?i)verify\\s*=\\s*False|algorithms\\s*=\\s*\\[?\\s*[\"']none[\"']",
+      "severity": "critical",
+      "category": "authentication",
+      "languages": [".py", ".js"],
+      "message": "JWT signature verification disabled — authentication bypass",
+      "suggestion": "Always verify JWT signatures with algorithms=['HS256'] and a strong secret",
+      "confidence": 0.95,
+      "enabled": true
+    },
+    {
+      "id": "AUTH-002",
+      "name": "SSL verification disabled",
+      "pattern": "(?i)verify\\s*=\\s*False|NODE_TLS_REJECT_UNAUTHORIZED\\s*=\\s*[\"']0[\"']",
+      "severity": "high",
+      "category": "authentication",
+      "languages": [".py", ".js"],
+      "message": "SSL/TLS certificate verification disabled — MITM attack vector",
+      "suggestion": "Enable certificate verification in production",
+      "confidence": 0.8,
+      "enabled": true
+    },
+    {
+      "id": "CONFIG-001",
+      "name": "Debug mode enabled",
+      "pattern": "(?i)(?:DEBUG|debug)\\s*=\\s*True|app\\.debug\\s*=\\s*True",
+      "severity": "low",
+      "category": "misconfiguration",
+      "languages": [".py", ".js", ".env"],
+      "message": "Debug mode enabled — may expose sensitive information in production",
+      "suggestion": "Set DEBUG=False in production configuration",
+      "confidence": 0.7,
+      "enabled": true
+    },
+    {
+      "id": "CONFIG-002",
+      "name": "CORS allow all origins",
+      "pattern": "(?i)(?:allow_origins|Access-Control-Allow-Origin)\\s*[:=]\\s*[\"']\\*[\"']",
+      "severity": "medium",
+      "category": "misconfiguration",
+      "languages": [".py", ".js", ".ts"],
+      "message": "CORS allows all origins — potential security risk",
+      "suggestion": "Restrict allowed origins to specific trusted domains",
+      "confidence": 0.8,
+      "enabled": true
+    }
+  ]
+}

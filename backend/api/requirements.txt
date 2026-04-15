@@ -1,0 +1,54 @@
+# Web framework
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+
+# Database
+sqlalchemy==2.0.30
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# Cache + Queue
+redis==5.0.4
+celery==5.4.0
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+httpx==0.27.0
+
+# AI
+groq==0.9.0
+openai==1.30.0
+
+# Security scanning
+semgrep==1.75.0
+bandit==1.7.9
+sslyze==6.3.0
+python-magic==0.4.27
+
+# Reports
+reportlab==4.2.0
+
+# Review Engine
+Jinja2>=3.1.0
+PyYAML>=6.0
+
+# Utilities
+pydantic==2.7.1
+pydantic-settings==2.3.0
+python-dotenv==1.0.1
+aiofiles==23.2.1
+websockets==12.0
+python-dateutil==2.9.0
+requests==2.32.3
+urllib3==2.2.1
+dnspython==2.6.1
+cryptography==44.0.3
+
+flower==2.0.1
+email-validator==2.2.0
+
+# HTTP Request Smuggling
+h2==4.1.0
